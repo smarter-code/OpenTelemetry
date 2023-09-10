@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
 using OpenTelemetry.WebApi.Models;
 
 namespace OpenTelemetry.WebApi.Controllers
@@ -9,13 +10,11 @@ namespace OpenTelemetry.WebApi.Controllers
     {
         private readonly ILogger<ApiController> _logger;
         private readonly IHttpClientFactory _clientFactory;
-        private readonly ApiDbContext _dbContext;
 
-        public ApiController(ILogger<ApiController> logger, IHttpClientFactory clientFactory, ApiDbContext dbContext)
+        public ApiController(ILogger<ApiController> logger, IHttpClientFactory clientFactory)
         {
             _logger = logger;
             _clientFactory = clientFactory;
-            _dbContext = dbContext;
         }
 
         [HttpPost]
@@ -41,8 +40,19 @@ namespace OpenTelemetry.WebApi.Controllers
                     Date = DateTime.Now
                 };
 
-                _dbContext.ApiResponses.Add(apiResponse);
-                await _dbContext.SaveChangesAsync();
+                // Save to database using Microsoft.Data.SqlClient
+                string connectionString = "Data Source=apiresponses.db";
+                using (SqliteConnection connection = new SqliteConnection(connectionString))
+                {
+                    connection.Open();
+                    using (SqliteCommand command = new SqliteCommand("INSERT INTO ApiResponses (Payload, Date) VALUES (@Payload, @Date)", connection))
+                    {
+                        command.Parameters.Add("@Payload", SqliteType.Text).Value = payload;
+                        command.Parameters.Add("@Date", SqliteType.Text).Value = DateTime.Now;
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+
 
                 return Ok(apiResponse);
             }
