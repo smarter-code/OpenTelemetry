@@ -1,3 +1,7 @@
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using OpenTelemetry.WebApi.Models;
 
 
@@ -12,6 +16,35 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApiDbContext>();
 builder.Services.AddHttpClient();
+
+// Open Telemetry logging
+builder.Logging.AddOpenTelemetry(options =>
+    {
+        options.IncludeFormattedMessage = true;
+        options.AddConsoleExporter();
+    });
+
+//Open Telemetry metrics
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(builder => builder
+        .AddService(serviceName: "OpenTelemetryWebApiService"))
+    .WithMetrics(builder => builder
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddConsoleExporter((exporterOptions, metricReaderOptions) =>
+        {
+            metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 30000;
+        })
+    );
+//Open Telemetry tracing 
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddSqlClientInstrumentation(options => options.SetDbStatementForText = true)
+        .AddConsoleExporter());
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
