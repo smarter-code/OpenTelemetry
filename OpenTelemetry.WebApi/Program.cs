@@ -2,7 +2,6 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using OpenTelemetry.WebApi.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,7 +39,6 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddSqlClientInstrumentation(options => options.SetDbStatementForText = true)
         .AddConsoleExporter());
 
 var app = builder.Build();
