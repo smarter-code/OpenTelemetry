@@ -23,7 +23,7 @@ namespace OpenTelemetry.WebApi.Controllers
             // Generate a random number between 1 and 100
             Random random = new Random();
             int randomNumber = random.Next(1, 101);
-
+            _logger.LogInformation($"The generated random number is {randomNumber}");
             // Construct the URL dynamically
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://jsonplaceholder.typicode.com/todos/{randomNumber}");
             var client = _clientFactory.CreateClient();
